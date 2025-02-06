@@ -16,6 +16,19 @@ class TaskViewModel extends StateNotifier<List<TaskModel>> {
     state = [...state, newTask]; // Update state
   }
 
+  void updateTask(int id, String newTitle, String newDescription) {
+    state = state.map((task) {
+      if (task.id == id) {
+        return task.copyWith(title: newTitle, description: newDescription);
+      }
+      return task;
+    }).toList();
+  }
+
+  // Remove Task
+  void removeTask(int id) {
+    state = state.where((task) => task.id != id).toList();
+  }
   // Toggle Task Completion
   void toggleTask(int id) {
     state = state.map((task) {
@@ -27,10 +40,5 @@ class TaskViewModel extends StateNotifier<List<TaskModel>> {
               description: task.description)
           : task;
     }).toList();
-  }
-
-  // Remove Task
-  void removeTask(int id) {
-    state = state.where((task) => task.id != id).toList();
   }
 }

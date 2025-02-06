@@ -6,7 +6,6 @@ import 'package:task_management/view_models/theme_view_model.dart';
 import 'package:task_management/views/home_screen.dart';
 
 Future<void> main() async {
-
   await Hive.initFlutter();
   // Open Hive box
   await Hive.openBox('settings');

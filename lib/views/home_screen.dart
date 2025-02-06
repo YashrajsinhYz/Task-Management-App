@@ -53,9 +53,29 @@ class HomeScreen extends ConsumerWidget {
                   decoration:
                       task.isCompleted ? TextDecoration.lineThrough : null),
             ),
-            trailing: IconButton(
-              icon: Icon(Icons.edit),
-              onPressed: () {},
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.edit),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AddEditTaskScreen(
+                          task: task,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: Icon(Icons.delete),
+                  onPressed: () {
+                    ref.watch(taskViewModelProvider.notifier).removeTask(task.id);
+                  },
+                ),
+              ],
             ),
           );
         },
