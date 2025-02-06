@@ -5,7 +5,7 @@ final themeStateNotifier =
     StateNotifierProvider<ThemeViewModel, bool>((ref) => ThemeViewModel());
 
 class ThemeViewModel extends StateNotifier<bool> {
-  ThemeViewModel() : super(_loadTheme()); 
+  ThemeViewModel({bool? isInitialModeDark}) : super(isInitialModeDark ?? _loadTheme());
 
   static bool _loadTheme() {
     final box = Hive.box("settings");

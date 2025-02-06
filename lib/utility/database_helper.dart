@@ -36,13 +36,32 @@ class DatabaseHelper {
   // Insert Task to DB
   static Future<int> insertTask(TaskModel task) async {
     final db = await database;
-    return await db.insert('tasks', task.toMap());
+    return await db.insert(dbTable, task.toMap(includeId: false));
   }
 
   // Fetch Tasks data from DB
   static Future<List<TaskModel>> fetchTasks() async {
     final db = await database;
-    final result = await db.query('tasks');
+    final result = await db.query(dbTable);
     return result.map((task) => TaskModel.fromMap(task)).toList();
+  }
+
+  static Future<void> updateTask(
+      int id, String title, String description) async {
+    final db = await database;
+    await db.update(
+        dbTable, {columnTitle: title, columnDescription: description},
+        where: "id = ?", whereArgs: [id]);
+  }
+
+  static Future<void> deleteTask(int id) async {
+    final db = await database;
+    await db.delete(dbTable, where: "id = ?", whereArgs: [id]);
+  }
+
+  static Future<void> updateTaskStatus(int id, bool isCompleted) async {
+    final db = await database;
+    await db.update(dbTable, {columnIsCompleted: isCompleted ? 1 : 0},
+        where: "id = ?", whereArgs: [id]);
   }
 }

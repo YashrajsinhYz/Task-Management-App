@@ -6,11 +6,22 @@ import 'package:task_management/view_models/theme_view_model.dart';
 import 'package:task_management/views/home_screen.dart';
 
 Future<void> main() async {
-  await Hive.initFlutter();
-  // Open Hive box
-  await Hive.openBox('settings');
+  WidgetsFlutterBinding.ensureInitialized();
 
-  runApp(ProviderScope(child: MyApp()));
+  // Initialize & Open Hive box
+  await Hive.initFlutter();
+  await Hive.openBox("settings");
+
+  // Load theme before running the app
+  final isDarkMode =
+      Hive.box("settings").get("isDarkMode", defaultValue: false);
+
+  runApp(ProviderScope(
+    overrides: [
+      themeStateNotifier.overrideWith((ref) => ThemeViewModel(isInitialModeDark: isDarkMode))
+    ],
+    child: MyApp(),
+  ));
 }
 
 class MyApp extends ConsumerWidget {
@@ -21,7 +32,7 @@ class MyApp extends ConsumerWidget {
     final isDarkMode = ref.watch(themeStateNotifier);
 
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: "Flutter Demo",
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

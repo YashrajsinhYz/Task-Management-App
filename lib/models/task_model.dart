@@ -12,8 +12,9 @@ class TaskModel {
   });
 
   // Convert Task to Map (for database operations)
-  Map<String, dynamic> toMap() => {
-        "id": id,
+  Map<String, dynamic> toMap({bool includeId = true}) => {
+        // Include ID only when needed
+        if (includeId) "id": id,
         "title": title,
         "description": description,
         "isCompleted": isCompleted ? 1 : 0,
