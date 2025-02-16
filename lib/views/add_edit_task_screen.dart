@@ -15,12 +15,16 @@ class AddEditTaskScreen extends ConsumerStatefulWidget {
 class _AddEditTaskScreenState extends ConsumerState<AddEditTaskScreen> {
   late final TextEditingController titleController;
   late final TextEditingController descriptionController;
+  TaskPriority selectedPriority = TaskPriority.medium; // Default Priority
 
   @override
   void initState() {
     super.initState();
-      titleController = TextEditingController(text: widget.task?.title ?? '');
-      descriptionController = TextEditingController(text: widget.task?.description ?? '');
+    titleController = TextEditingController(text: widget.task?.title ?? '');
+    descriptionController = TextEditingController(text: widget.task?.description ?? '');
+    if (widget.task != null) {
+      selectedPriority = widget.task!.priority; // Set existing priority
+    }
   }
 
   @override
@@ -34,43 +38,47 @@ class _AddEditTaskScreenState extends ConsumerState<AddEditTaskScreen> {
             TextField(
               controller: titleController,
               textInputAction: TextInputAction.next,
-              textCapitalization: TextCapitalization.words,
-              decoration: InputDecoration(
-                labelText: "Title",
-                border: OutlineInputBorder(),
-              ),
+              decoration: InputDecoration(labelText: "Title", border: OutlineInputBorder()),
             ),
-            SizedBox(height: 20),
+            SizedBox(height: 16),
             TextField(
               maxLines: 4,
               controller: descriptionController,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: InputDecoration(
-                labelText: "Description",
-                border: OutlineInputBorder(),
-              ),
+              decoration: InputDecoration(labelText: "Description", border: OutlineInputBorder()),
             ),
-            SizedBox(height: 20),
-            SizedBox(
-              width: MediaQuery.of(context).size.width,
-              child: ElevatedButton(
-                child: Text("${widget.task == null ? "Add" : "Edit"} Task"),
-                onPressed: () {
-                  if (titleController.text.isNotEmpty &&
-                      descriptionController.text.isNotEmpty) {
-                    final taskProvider =
-                        ref.read(taskViewModelProvider.notifier);
+            SizedBox(height: 16),
 
-                    widget.task == null
-                        ? taskProvider.addTask(
-                            titleController.text, descriptionController.text)
-                        : taskProvider.updateTask(widget.task!.id,
-                            titleController.text, descriptionController.text);
-                    // Go back to Task List
-                    Navigator.pop(context);
-                  }
-                },
-              ),
+            // Priority Dropdown
+            DropdownButtonFormField<TaskPriority>(
+              value: selectedPriority,
+              decoration: InputDecoration(border: OutlineInputBorder()),
+              items: TaskPriority.values.map((priority) {
+                return DropdownMenuItem(
+                  value: priority,
+                  child: Text(priority.name.toUpperCase()),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  selectedPriority = value!;
+                });
+              },
+            ),
+
+            SizedBox(height: 20),
+            ElevatedButton(
+              child: Text("${widget.task == null ? "Add" : "Edit"} Task"),
+              onPressed: () {
+                if (titleController.text.isNotEmpty && descriptionController.text.isNotEmpty) {
+                  final taskProvider = ref.read(taskViewModelProvider.notifier);
+
+                  widget.task == null
+                      ? taskProvider.addTask(titleController.text, descriptionController.text, selectedPriority)
+                      : taskProvider.updateTask(widget.task!.id, titleController.text, descriptionController.text, selectedPriority);
+
+                  Navigator.pop(context);
+                }
+              },
             ),
           ],
         ),
@@ -78,3 +86,4 @@ class _AddEditTaskScreenState extends ConsumerState<AddEditTaskScreen> {
     );
   }
 }
+

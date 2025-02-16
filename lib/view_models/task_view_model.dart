@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:task_management/models/task_model.dart';
 import 'package:task_management/utility/database_helper.dart';
 
@@ -14,26 +15,34 @@ class TaskViewModel extends StateNotifier<List<TaskModel>> {
   }
 
   Future<void> loadTasks() async {
-    final tasks = await DatabaseHelper.fetchTasks();
+    final sortBy = Hive.box("settings").get("sortBy", defaultValue: "date");
+    final tasks = await DatabaseHelper.fetchTasks(sortBy: sortBy);
     state = tasks;
   }
 
+
   // Add Task
-  Future<void> addTask(String title, String description) async {
-    final newTask = TaskModel(id: 0, title: title, description: description);
+  Future<void> addTask(String title, String description, TaskPriority priority) async {
+    final newTask = TaskModel(
+      id: 0,
+      title: title,
+      description: description,
+      date: DateTime.now(), // Set current date
+      priority: priority, // Use provided priority
+    );
 
     int id = await DatabaseHelper.insertTask(newTask);
-
-    // Use actual SQLite ID & Update state
     state = [...state, newTask.copyWith(id: id)];
+    sortTasks(); // Re-sort tasks
   }
 
-  Future<void> updateTask(int id, String newTitle, String newDescription) async {
-    await DatabaseHelper.updateTask(id, newTitle, newDescription);
+
+  Future<void> updateTask(int id, String newTitle, String newDescription, TaskPriority selectedPriority) async {
+    await DatabaseHelper.updateTask(id, newTitle, newDescription, selectedPriority);
 
     state = state.map((task) {
       if (task.id == id) {
-        return task.copyWith(title: newTitle, description: newDescription);
+        return task.copyWith(title: newTitle, description: newDescription, priority: selectedPriority);
       }
       return task;
     }).toList();
@@ -54,15 +63,16 @@ class TaskViewModel extends StateNotifier<List<TaskModel>> {
     
     await DatabaseHelper.updateTaskStatus(id, updatedTask.isCompleted);
 
-    state = state.map((task) => task.id == id ? updatedTask : task
-      /*{
-      return task.id == id
-          ? TaskModel(
-              id: task.id,
-              title: task.title,
-              isCompleted: !task.isCompleted,
-              description: task.description)
-          : task;
-    }*/).toList();
+    state = state.map((task) => task.id == id ? updatedTask : task).toList();
   }
+
+  void sortTasks() {
+    final sortBy = Hive.box("settings").get("sortBy", defaultValue: "date");
+    state = [...state]
+      ..sort((a, b) => sortBy == "priority"
+          ? a.priority.index.compareTo(b.priority.index) // High first
+          : b.date.compareTo(a.date)); // Recent first
+  }
+
+
 }

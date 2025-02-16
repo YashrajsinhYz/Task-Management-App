@@ -13,6 +13,8 @@ class DatabaseHelper {
   static const columnTitle = "title";
   static const columnDescription = "description";
   static const columnIsCompleted = "isCompleted";
+  static const columnDate = "date";
+  static const columnPriority = "priority";
 
   //initialize Database
   static Database? _database;
@@ -28,9 +30,24 @@ class DatabaseHelper {
 
   // Create DB
   static FutureOr<void> _onCreate(Database db, int version) async {
-    await db.execute(
-      "CREATE TABLE $dbTable($columnId INTEGER PRIMARY KEY AUTOINCREMENT, $columnTitle TEXT NOT NULL, $columnDescription TEXT, $columnIsCompleted INTEGER DEFAULT 0 CHECK ($columnIsCompleted IN (0,1)))",
-    );
+    await db.execute('''CREATE TABLE $dbTable(
+           $columnId INTEGER PRIMARY KEY AUTOINCREMENT, 
+           $columnTitle TEXT NOT NULL, 
+           $columnDescription TEXT, 
+           $columnIsCompleted INTEGER DEFAULT 0 CHECK ($columnIsCompleted IN (0,1)), 
+           $columnDate TEXT NOT NULL, 
+           $columnPriority INTEGER NOT NULL DEFAULT 1)''' // 0=High, 1=Medium, 2=Low
+        );
+  }
+
+  // Fetch Tasks data from DB
+  static Future<List<TaskModel>> fetchTasks({String sortBy = 'date'}) async {
+    final db = await database;
+    final orderBy = sortBy == columnPriority
+        ? '$columnPriority ASC'
+        : '$columnDate DESC'; // High first
+    final result = await db.query(dbTable, orderBy: orderBy);
+    return result.map((task) => TaskModel.fromMap(task)).toList();
   }
 
   // Insert Task to DB
@@ -39,19 +56,18 @@ class DatabaseHelper {
     return await db.insert(dbTable, task.toMap(includeId: false));
   }
 
-  // Fetch Tasks data from DB
-  static Future<List<TaskModel>> fetchTasks() async {
-    final db = await database;
-    final result = await db.query(dbTable);
-    return result.map((task) => TaskModel.fromMap(task)).toList();
-  }
-
   static Future<void> updateTask(
-      int id, String title, String description) async {
+      int id, String title, String description, TaskPriority priority) async {
     final db = await database;
     await db.update(
-        dbTable, {columnTitle: title, columnDescription: description},
-        where: "id = ?", whereArgs: [id]);
+        dbTable,
+        {
+          columnTitle: title,
+          columnDescription: description,
+          columnPriority: priority.index,
+        },
+        where: "id = ?",
+        whereArgs: [id]);
   }
 
   static Future<void> deleteTask(int id) async {
