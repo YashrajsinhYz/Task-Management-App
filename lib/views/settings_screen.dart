@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:task_management/view_models/task_view_model.dart';
 import 'package:task_management/view_models/theme_view_model.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -8,8 +7,7 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDarkMode = ref.watch(themeStateNotifier);
-    final sortBy = ref.watch(sortPreferenceProvider);
+    final isDarkMode = ref.watch(themeViewModelProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text("Settings")),
@@ -32,29 +30,7 @@ class SettingsScreen extends ConsumerWidget {
                     value: isDarkMode,
                     activeColor: Colors.tealAccent,
                     onChanged: (value) =>
-                        ref.read(themeStateNotifier.notifier).toggleTheme())
-              ],
-            ),
-
-            // Sorting Dropdown
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("Sort Tasks By"),
-                DropdownButton<String>(
-                  value: sortBy,
-                  items: [
-                    DropdownMenuItem(value: "date", child: Text("Date")),
-                    DropdownMenuItem(
-                        value: "priority", child: Text("Priority")),
-                  ],
-                  onChanged: (value) {
-                    ref
-                        .read(sortPreferenceProvider.notifier)
-                        .updateSortPreference(value!);
-                    ref.read(taskViewModelProvider.notifier).sortTasks();
-                  },
-                ),
+                        ref.read(themeViewModelProvider.notifier).toggleTheme())
               ],
             ),
           ],

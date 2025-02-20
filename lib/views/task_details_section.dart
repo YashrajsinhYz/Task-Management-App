@@ -8,7 +8,11 @@ class TaskDetailsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Check screen width
+    final isTablet = MediaQuery.of(context).size.width > 600;
+
     return Scaffold(
+      appBar: isTablet ? null : AppBar(title: Text("Task Details")),
       body: Container(
         padding: EdgeInsets.all(10),
         child: Column(

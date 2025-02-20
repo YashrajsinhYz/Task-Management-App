@@ -20,9 +20,18 @@ class AppTheme {
       foregroundColor: Colors.white,
     ),
     inputDecorationTheme: InputDecorationTheme(
-      border: OutlineInputBorder(borderSide: BorderSide(color: Colors.blue)),
-      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.blue, width: 2)),
-      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Colors.blue),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Colors.blue, width: 2),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Colors.grey),
+      ),
     ),
   );
 
@@ -45,9 +54,18 @@ class AppTheme {
       foregroundColor: Colors.black,
     ),
     inputDecorationTheme: InputDecorationTheme(
-      border: OutlineInputBorder(borderSide: BorderSide(color: Colors.teal)),
-      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.teal, width: 2)),
-      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Colors.teal),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Colors.teal, width: 2),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Colors.grey),
+      ),
     ),
   );
 }

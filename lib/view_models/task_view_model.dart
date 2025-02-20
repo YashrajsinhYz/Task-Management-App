@@ -20,14 +20,15 @@ class TaskViewModel extends StateNotifier<List<TaskModel>> {
     state = tasks;
   }
 
-
   // Add Task
-  Future<void> addTask(String title, String description, TaskPriority priority) async {
+  Future<void> addTask(
+      String title, String description, TaskPriority priority) async {
     final newTask = TaskModel(
       id: 0,
       title: title,
       description: description,
-      date: DateTime.now(), // Set current date
+      date: DateTime.now(),
+      // Set current date
       priority: priority, // Use provided priority
     );
 
@@ -36,13 +37,17 @@ class TaskViewModel extends StateNotifier<List<TaskModel>> {
     sortTasks(); // Re-sort tasks
   }
 
-
-  Future<void> updateTask(int id, String newTitle, String newDescription, TaskPriority selectedPriority) async {
-    await DatabaseHelper.updateTask(id, newTitle, newDescription, selectedPriority);
+  Future<void> updateTask(int id, String newTitle, String newDescription,
+      TaskPriority selectedPriority) async {
+    await DatabaseHelper.updateTask(
+        id, newTitle, newDescription, selectedPriority);
 
     state = state.map((task) {
       if (task.id == id) {
-        return task.copyWith(title: newTitle, description: newDescription, priority: selectedPriority);
+        return task.copyWith(
+            title: newTitle,
+            description: newDescription,
+            priority: selectedPriority);
       }
       return task;
     }).toList();
@@ -60,7 +65,7 @@ class TaskViewModel extends StateNotifier<List<TaskModel>> {
     final task = state.firstWhere((task) => task.id == id);
 
     final updatedTask = task.copyWith(isCompleted: !task.isCompleted);
-    
+
     await DatabaseHelper.updateTaskStatus(id, updatedTask.isCompleted);
 
     state = state.map((task) => task.id == id ? updatedTask : task).toList();
@@ -68,11 +73,8 @@ class TaskViewModel extends StateNotifier<List<TaskModel>> {
 
   void sortTasks() {
     final sortBy = Hive.box("settings").get("sortBy", defaultValue: "date");
-    state = [...state]
-      ..sort((a, b) => sortBy == "priority"
-          ? a.priority.index.compareTo(b.priority.index) // High first
-          : b.date.compareTo(a.date)); // Recent first
+    state = [...state]..sort((a, b) => sortBy == "priority"
+        ? a.priority.index.compareTo(b.priority.index) // High first
+        : b.date.compareTo(a.date)); // Recent first
   }
-
-
 }

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:task_management/models/task_model.dart';
+import 'package:task_management/view_models/sort_pref_view_model.dart';
 import 'package:task_management/view_models/task_view_model.dart';
-import 'package:task_management/view_models/theme_view_model.dart';
 import 'package:task_management/views/add_edit_task_screen.dart';
 import 'package:task_management/views/settings_screen.dart';
 import 'package:task_management/views/task_details_section.dart';
+import 'package:task_management/widgets/task_tile_widget.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -20,7 +21,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final tasks = ref.watch(taskViewModelProvider);
-    final sortBy = ref.watch(sortPreferenceProvider);
+    final sortBy = ref.watch(sortPrefViewModelProvider);
     // Check screen width
     final isTablet = MediaQuery.of(context).size.width > 600;
 
@@ -28,13 +29,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       appBar: AppBar(
         title: Text('Task Manager'),
         actions: [
+          // Sorting Popup
+          PopupMenuButton(
+            icon: Icon(Icons.sort),
+            initialValue: sortBy,
+            itemBuilder: (context) => [
+              PopupMenuItem(value: "date", child: Text("Date")),
+              PopupMenuItem(value: "priority", child: Text("Priority")),
+            ],
+            onSelected: (value) {
+              // Save sort preference
+              ref
+                  .read(sortPrefViewModelProvider.notifier)
+                  .updateSortPreference(value);
+              // Sort task according to preference
+              ref.read(taskViewModelProvider.notifier).sortTasks();
+            },
+          ),
+          // Settings Button
           IconButton(
             icon: Icon(Icons.settings),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => SettingsScreen()),
             ),
-          )
+          ),
         ],
       ),
       body: isTablet ? _buildTabletView(tasks) : _buildMobileView(tasks),
@@ -60,7 +79,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
         return TaskTile(
           task: task,
-          onTap: () {},
+          onTap: () {
+            selectedTask = task;
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TaskDetailsSection(task: selectedTask!),
+                ));
+          },
           onDelete: () {
             ref.read(taskViewModelProvider.notifier).removeTask(task.id);
           },
@@ -112,103 +138,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               : Center(child: Text("Select a task to view details")),
         ),
       ],
-    );
-  }
-}
-
-// 📌 Reusable TaskTile Widget
-class TaskTile extends ConsumerWidget {
-  final TaskModel task;
-  final VoidCallback onTap;
-  final VoidCallback onDelete;
-  final VoidCallback onToggle;
-  final bool isSelected;
-
-  const TaskTile({
-    super.key,
-    required this.task,
-    required this.onTap,
-    required this.onDelete,
-    required this.onToggle,
-    this.isSelected = false,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return ListTile(
-      onTap: onTap,
-      leading: IconButton(
-        icon: Icon(
-            task.isCompleted ? Icons.check_box : Icons.check_box_outline_blank),
-        onPressed: onToggle,
-      ),
-      title: Text(
-        task.title,
-        style: TextStyle(
-            decoration: task.isCompleted ? TextDecoration.lineThrough : null),
-      ),
-      subtitle: Text(
-        task.description,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-            decoration: task.isCompleted ? TextDecoration.lineThrough : null),
-      ),
-      // Highlight selected task on tablet
-      tileColor: isSelected ? Colors.grey : null,
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            task.priority.name.toUpperCase(), // Show priority
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: task.priority == TaskPriority.high
-                  ? Colors.red
-                  : task.priority == TaskPriority.medium
-                      ? Colors.orange
-                      : Colors.green,
-            ),
-          ),
-          IconButton(
-            icon: Icon(Icons.edit),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => AddEditTaskScreen(task: task),
-                ),
-              );
-            },
-          ),
-          IconButton(
-              icon: Icon(Icons.delete),
-              onPressed: () => _showDeleteDialog(context, ref)),
-        ],
-      ),
-    );
-  }
-
-  void _showDeleteDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Confirm Delete"),
-        content: Text("Are you sure you want to delete this task?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("Cancel"),
-          ),
-          TextButton(
-            child: Text("Delete"),
-            onPressed: () {
-              ref.read(taskViewModelProvider.notifier).removeTask(task.id);
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      ),
     );
   }
 }

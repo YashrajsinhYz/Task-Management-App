@@ -18,7 +18,8 @@ Future<void> main() async {
 
   runApp(ProviderScope(
     overrides: [
-      themeStateNotifier.overrideWith((ref) => ThemeViewModel(isInitialModeDark: isDarkMode))
+      themeViewModelProvider
+          .overrideWith((ref) => ThemeViewModel(isInitialModeDark: isDarkMode))
     ],
     child: MyApp(),
   ));
@@ -29,15 +30,18 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDarkMode = ref.watch(themeStateNotifier);
+    final isDarkMode = ref.watch(themeViewModelProvider);
 
-    return MaterialApp(
-      title: "Flutter Demo",
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
-      home: HomeScreen(),
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      child: MaterialApp(
+        title: "Flutter Demo",
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
+        home: HomeScreen(),
+      ),
     );
   }
 }
