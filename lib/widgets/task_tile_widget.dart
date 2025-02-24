@@ -23,56 +23,62 @@ class TaskTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return ListTile(
-      onTap: onTap,
-      leading: IconButton(
-        icon: Icon(
-            task.isCompleted ? Icons.check_box : Icons.check_box_outline_blank),
-        onPressed: onToggle,
-      ),
-      title: Text(
-        task.title,
-        style: TextStyle(
-            decoration: task.isCompleted ? TextDecoration.lineThrough : null),
-      ),
-      subtitle: Text(
-        task.description,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-            decoration: task.isCompleted ? TextDecoration.lineThrough : null),
-      ),
-      // Highlight selected task on tablet
-      tileColor: isSelected ? Colors.grey : null,
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            task.priority.name.toUpperCase(), // Show priority
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: task.priority == TaskPriority.high
-                  ? Colors.red
-                  : task.priority == TaskPriority.medium
-                      ? Colors.orange
-                      : Colors.green,
+    return Container(
+      margin: EdgeInsets.only(bottom: 10, left: 10, right: 10),
+      child: ListTile(
+        onTap: onTap,
+        leading: IconButton(
+          visualDensity: VisualDensity.compact,
+          icon: Icon(task.isCompleted
+              ? Icons.check_box
+              : Icons.check_box_outline_blank),
+          onPressed: onToggle,
+        ),
+        title: Text(
+          task.title,
+          style: TextStyle(
+              decoration: task.isCompleted ? TextDecoration.lineThrough : null),
+        ),
+        subtitle: Text(
+          task.description,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+              decoration: task.isCompleted ? TextDecoration.lineThrough : null),
+        ),
+        // Highlight selected task on tablet
+        tileColor: isSelected ? Colors.grey : null,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              task.priority.name.toUpperCase(), // Show priority
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: task.priority == TaskPriority.high
+                    ? Colors.red
+                    : task.priority == TaskPriority.medium
+                        ? Colors.orange
+                        : Colors.green,
+              ),
             ),
-          ),
-          IconButton(
-            icon: Icon(Icons.edit),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => AddEditTaskScreen(task: task),
-                ),
-              );
-            },
-          ),
-          IconButton(
-              icon: Icon(Icons.delete),
-              onPressed: () => _showDeleteDialog(context, ref)),
-        ],
+            IconButton(
+              icon: Icon(Icons.edit),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AddEditTaskScreen(task: task),
+                  ),
+                );
+              },
+            ),
+            IconButton(
+                icon: Icon(Icons.delete),
+                // visualDensity: VisualDensity.compact,
+                onPressed: () => _showDeleteDialog(context, ref)),
+          ],
+        ),
       ),
     );
   }

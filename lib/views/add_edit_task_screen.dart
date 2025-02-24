@@ -32,10 +32,6 @@ class _AddEditTaskScreenState extends ConsumerState<AddEditTaskScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // calculate the width of the text field for the option builder width
-    final RenderBox renderBox = dropdownKey.currentContext!
-        .findRenderObject() as RenderBox;
-    final double width = renderBox.size.width;
     return Scaffold(
       appBar: AppBar(
         title: Text("${widget.task == null ? "Add New" : "Edit"} Task"),
@@ -72,10 +68,13 @@ class _AddEditTaskScreenState extends ConsumerState<AddEditTaskScreen> {
             Text("Priority", style: TextStyle(fontSize: 22)),
             // Priority Dropdown
             DropdownButtonFormField<TaskPriority>(
+              key: dropdownKey,
               value: selectedPriority,
               decoration: InputDecoration(border: OutlineInputBorder()),
-
               items: TaskPriority.values.map((priority) {
+                // calculate the width of the text field for the option builder width
+                /*final RenderBox renderBox = dropdownKey.currentContext!.findRenderObject() as RenderBox;
+                final double width = renderBox.size.width;*/
                 return DropdownMenuItem(
                   value: priority,
                   child: Text(priority.name.toUpperCase()),

@@ -21,13 +21,13 @@ class TaskModel {
   Map<String, dynamic> toMap({bool includeId = true}) {
     return {
       // Include ID only when needed
-      if (includeId) 'id': id,
-      'title': title,
-      'description': description,
+      if (includeId) "id": id,
+      "title": title,
+      "description": description,
       // Store as index (0=High, 1=Medium, 2=Low)
-      'priority': priority.index,
-      'date': date.toIso8601String(),
-      'isCompleted': isCompleted ? 1 : 0,
+      "priority": priority.index,
+      "date": date.toIso8601String(),
+      "isCompleted": isCompleted ? 1 : 0,
     };
   }
 

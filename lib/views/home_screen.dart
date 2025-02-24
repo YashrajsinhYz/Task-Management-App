@@ -27,7 +27,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Task Manager'),
+        title: Text("Tasks"),
         actions: [
           // Sorting Popup
           PopupMenuButton(
@@ -77,8 +77,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       itemBuilder: (context, index) {
         final task = tasks[index];
 
-        return TaskTile(
+        /*return TaskTile(
           task: task,
+          onDelete: () {
+            ref.read(taskViewModelProvider.notifier).removeTask(task.id);
+          },
+          onToggle: () {
+            ref.read(taskViewModelProvider.notifier).toggleTask(task.id);
+          },
           onTap: () {
             selectedTask = task;
             Navigator.push(
@@ -87,12 +93,86 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   builder: (context) => TaskDetailsSection(task: selectedTask!),
                 ));
           },
-          onDelete: () {
-            ref.read(taskViewModelProvider.notifier).removeTask(task.id);
-          },
-          onToggle: () {
-            ref.read(taskViewModelProvider.notifier).toggleTask(task.id);
-          },
+        );*/
+
+        return Container(
+          height: 100,
+          padding: EdgeInsets.all(12),
+          margin: EdgeInsets.only(bottom: 10, left: 10, right: 10),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.black),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            children: [
+              Flexible(
+                child: Center(
+                  child: IconButton(
+                    visualDensity: VisualDensity.compact,
+                    icon: Icon(task.isCompleted
+                        ? Icons.check_box
+                        : Icons.check_box_outline_blank),
+                    onPressed: () {
+                      ref.read(taskViewModelProvider.notifier).toggleTask(task.id);
+                    },
+                  ),
+                ),
+              ),
+              Flexible(
+                flex: 8,
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(task.title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, decoration: task.isCompleted ? TextDecoration.lineThrough : null)),
+                        Flexible(
+                            child: Container(
+                                padding:
+                                    EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.black),
+                                    borderRadius: BorderRadius.circular(20)),
+                                child: Text(
+                                  task.priority.name.toUpperCase(),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: task.priority == TaskPriority.high
+                                        ? Colors.red
+                                        : task.priority == TaskPriority.medium
+                                            ? Colors.orange
+                                            : Colors.green,
+                                  ),
+                                ))),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Text(
+                          task.description,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              decoration: task.isCompleted ? TextDecoration.lineThrough : null),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Text(
+                          "${task.date.day}/${task.date.month}/${task.date.year}",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              decoration: task.isCompleted ? TextDecoration.lineThrough : null),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
