@@ -6,17 +6,17 @@ class AppTheme {
     colorScheme: ColorScheme.light(primary: Colors.black),
     appBarTheme: AppBarTheme(
       color: Colors.white,
-      iconTheme: IconThemeData(color: Colors.black,weight: 1000),
-      titleTextStyle: TextStyle(color: Colors.black, fontSize: 22,fontWeight: FontWeight.bold),
+      iconTheme: IconThemeData(color: Colors.grey.shade900,weight: 1000),
+      titleTextStyle: TextStyle(color: Colors.grey.shade900, fontSize: 22,fontWeight: FontWeight.bold),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.grey.shade900,
         foregroundColor: Colors.white,
       ),
     ),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.grey.shade900,
       foregroundColor: Colors.white,
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -30,7 +30,7 @@ class AppTheme {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Colors.grey),
+        borderSide: BorderSide(color: Colors.black),
       ),
     ),
     listTileTheme: ListTileThemeData(
@@ -44,7 +44,7 @@ class AppTheme {
 
   static ThemeData darkTheme = ThemeData(
     scaffoldBackgroundColor: Colors.grey.shade900,
-    colorScheme: ColorScheme.dark(primary: Colors.grey.shade900),
+    colorScheme: ColorScheme.dark(primary: Colors.white),
     appBarTheme: AppBarTheme(
       color: Colors.grey.shade900,
       iconTheme: IconThemeData(color: Colors.white),
@@ -52,26 +52,26 @@ class AppTheme {
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.grey.shade900,
-        foregroundColor: Colors.black,
+        backgroundColor: Colors.teal,
+        foregroundColor: Colors.white,
       ),
     ),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
-      backgroundColor: Colors.grey.shade900,
-      foregroundColor: Colors.black,
+      backgroundColor: Colors.teal,
+      foregroundColor: Colors.white,
     ),
     inputDecorationTheme: InputDecorationTheme(
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Colors.grey.shade900),
+        borderSide: BorderSide(color: Colors.teal),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Colors.grey.shade900, width: 2),
+        borderSide: BorderSide(color: Colors.teal, width: 2),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Colors.grey),
+        borderSide: BorderSide(color: Colors.white),
       ),
     ),
     listTileTheme: ListTileThemeData(

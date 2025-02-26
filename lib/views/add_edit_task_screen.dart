@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:task_management/models/task_model.dart';
 import 'package:task_management/view_models/task_view_model.dart';
+import 'package:task_management/view_models/theme_view_model.dart';
 
 class AddEditTaskScreen extends ConsumerStatefulWidget {
   final TaskModel? task;
@@ -32,6 +33,7 @@ class _AddEditTaskScreenState extends ConsumerState<AddEditTaskScreen> {
 
   @override
   Widget build(BuildContext context) {
+  final isDarkMode = ref.watch(themeViewModelProvider);
     return Scaffold(
       appBar: AppBar(
         title: Text("${widget.task == null ? "Add New" : "Edit"} Task"),
@@ -47,7 +49,9 @@ class _AddEditTaskScreenState extends ConsumerState<AddEditTaskScreen> {
             // Title
             TextField(
               controller: titleController,
+              textCapitalization: TextCapitalization.words,
               textInputAction: TextInputAction.next,
+              cursorColor: isDarkMode ? Colors.white : null,
               decoration: InputDecoration(
                 hintText: "Add Task Title",
               ),
@@ -59,6 +63,8 @@ class _AddEditTaskScreenState extends ConsumerState<AddEditTaskScreen> {
             TextField(
               maxLines: 4,
               controller: descriptionController,
+              textCapitalization: TextCapitalization.sentences,
+              cursorColor: isDarkMode ? Colors.white : null,
               decoration: InputDecoration(
                 hintText: "Add Description",
               ),
@@ -100,7 +106,7 @@ class _AddEditTaskScreenState extends ConsumerState<AddEditTaskScreen> {
             shape: WidgetStatePropertyAll(RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16))),
             fixedSize: WidgetStatePropertyAll(
-                Size(MediaQuery.of(context).size.width - 30, 70))),
+                Size(MediaQuery.of(context).size.width - 30, 60))),
         onPressed: () {
           if (titleController.text.isNotEmpty &&
               descriptionController.text.isNotEmpty) {

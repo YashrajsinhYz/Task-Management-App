@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:task_management/models/task_model.dart';
 import 'package:task_management/view_models/sort_pref_view_model.dart';
 import 'package:task_management/view_models/task_view_model.dart';
+import 'package:task_management/view_models/theme_view_model.dart';
 import 'package:task_management/views/add_edit_task_screen.dart';
 import 'package:task_management/views/settings_screen.dart';
 import 'package:task_management/views/task_details_section.dart';
@@ -17,11 +18,13 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   TaskModel? selectedTask; // For tablet view
+  bool isDarkMode = false;
 
   @override
   Widget build(BuildContext context) {
     final tasks = ref.watch(taskViewModelProvider);
     final sortBy = ref.watch(sortPrefViewModelProvider);
+    isDarkMode = ref.watch(themeViewModelProvider);
     // Check screen width
     final isTablet = MediaQuery.of(context).size.width > 600;
 
@@ -31,7 +34,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         actions: [
           // Sorting Popup
           PopupMenuButton(
-            icon: Icon(Icons.sort),
+            icon: Icon(Icons.filter_list),
             initialValue: sortBy,
             itemBuilder: (context) => [
               PopupMenuItem(value: "date", child: Text("Date")),
@@ -74,6 +77,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildMobileView(List<TaskModel> tasks) {
     return ListView.builder(
       itemCount: tasks.length,
+      physics: ClampingScrollPhysics(),
       itemBuilder: (context, index) {
         final task = tasks[index];
 
@@ -95,43 +99,69 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           },
         );*/
 
-        return Container(
-          height: 100,
-          padding: EdgeInsets.all(12),
-          margin: EdgeInsets.only(bottom: 10, left: 10, right: 10),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.black),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            children: [
-              Flexible(
-                child: Center(
-                  child: IconButton(
-                    visualDensity: VisualDensity.compact,
-                    icon: Icon(task.isCompleted
-                        ? Icons.check_box
-                        : Icons.check_box_outline_blank),
-                    onPressed: () {
-                      ref.read(taskViewModelProvider.notifier).toggleTask(task.id);
-                    },
-                  ),
-                ),
+        return GestureDetector(
+          onTap: () {
+            selectedTask = task;
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TaskDetailsSection(task: selectedTask!),
+                ));
+          },
+          child: Dismissible(
+            key: Key("${index - 1}"),
+            child: Container(
+              height: 74,
+              padding: EdgeInsets.all(10),
+              margin: EdgeInsets.only(bottom: 10, left: 10, right: 10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border:
+                    Border.all(color: isDarkMode ? Colors.white : Colors.black),
               ),
-              Flexible(
-                flex: 8,
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Center(
+                      child: IconButton(
+                        visualDensity: VisualDensity.compact,
+                        icon: Icon(task.isCompleted
+                            ? Icons.check_box
+                            : Icons.check_box_outline_blank),
+                        onPressed: () {
+                          ref
+                              .read(taskViewModelProvider.notifier)
+                              .toggleTask(task.id);
+                        },
+                      ),
+                    ),
+                  ),
+                  Flexible(
+                    flex: 8,
+                    child: Column(
                       children: [
-                        Text(task.title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, decoration: task.isCompleted ? TextDecoration.lineThrough : null)),
-                        Flexible(
-                            child: Container(
-                                padding:
-                                    EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              task.title,
+                              style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color:
+                                      isDarkMode ? Colors.white : Colors.black,
+                                  decoration: task.isCompleted
+                                      ? TextDecoration.lineThrough
+                                      : null),
+                            ),
+                            Flexible(
+                              child: Container(
+                                padding: EdgeInsets.symmetric(horizontal: 8),
                                 decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.black),
+                                    border: Border.all(
+                                        color: isDarkMode
+                                            ? Colors.white
+                                            : Colors.black),
                                     borderRadius: BorderRadius.circular(20)),
                                 child: Text(
                                   task.priority.name.toUpperCase(),
@@ -143,35 +173,56 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                             ? Colors.orange
                                             : Colors.green,
                                   ),
-                                ))),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Text(
-                          task.description,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                              decoration: task.isCompleted ? TextDecoration.lineThrough : null),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              task.description,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  color:
+                                      isDarkMode ? Colors.white : Colors.black,
+                                  decoration: task.isCompleted
+                                      ? TextDecoration.lineThrough
+                                      : null),
+                            ),
+                            Text(
+                              "${task.date.day}/${task.date.month}/${task.date.year}",
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: isDarkMode ? Colors.white : Colors.black,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                    Row(
-                      children: [
-                        Text(
-                          "${task.date.day}/${task.date.month}/${task.date.year}",
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                              decoration: task.isCompleted ? TextDecoration.lineThrough : null),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
+            ),
+            confirmDismiss: (direction) async {
+              // Edit
+              if (direction == DismissDirection.startToEnd) {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AddEditTaskScreen(task: task),
+                    ));
+              }
+              // Delete
+              else if (direction == DismissDirection.endToStart) {
+                _showDeleteDialog(context, ref, task);
+              }
+              return null;
+            },
           ),
         );
       },
@@ -218,6 +269,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               : Center(child: Text("Select a task to view details")),
         ),
       ],
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context, WidgetRef ref, TaskModel task) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Confirm Delete"),
+        content: Text("Are you sure you want to delete this task?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Cancel"),
+          ),
+          TextButton(
+            child: Text("Delete"),
+            onPressed: () {
+              ref.read(taskViewModelProvider.notifier).removeTask(task.id);
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
     );
   }
 }
