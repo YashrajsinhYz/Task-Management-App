@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+final searchQueryProvider = StateProvider<String>((ref) => "");
+
 final sortPrefViewModelProvider =
     StateNotifierProvider<SortPreferenceViewModel, String>(
   (ref) => SortPreferenceViewModel(),

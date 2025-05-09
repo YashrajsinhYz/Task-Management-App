@@ -13,18 +13,20 @@ class TaskDetailsSection extends StatelessWidget {
 
     return Scaffold(
       appBar: isTablet ? null : AppBar(title: Text("Task Details")),
-      body: Container(
-        padding: EdgeInsets.all(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Title :"),
-            Text(task!.title, style: TextStyle(fontSize: 25)),
-            Divider(),
-            SizedBox(height: 20),
-            Text("Description :"),
-            Text(task!.description, style: TextStyle(fontSize: 25)),
-          ],
+      body: SingleChildScrollView(
+        child: Container(
+          padding: EdgeInsets.all(10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Title :"),
+              Text(task!.title, style: TextStyle(fontSize: 25)),
+              Divider(),
+              SizedBox(height: 20),
+              Text("Description :"),
+              Text(task!.description, style: TextStyle(fontSize: 25)),
+            ],
+          ),
         ),
       ),
     );

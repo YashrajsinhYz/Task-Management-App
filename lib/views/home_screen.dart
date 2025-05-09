@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:task_management/models/task_model.dart';
@@ -5,202 +8,315 @@ import 'package:task_management/view_models/sort_pref_view_model.dart';
 import 'package:task_management/view_models/task_view_model.dart';
 import 'package:task_management/view_models/theme_view_model.dart';
 import 'package:task_management/views/add_edit_task_screen.dart';
-import 'package:task_management/views/settings_screen.dart';
 import 'package:task_management/views/task_details_section.dart';
-import 'package:task_management/widgets/task_tile_widget.dart';
+import 'package:task_management/widgets/drawer_widget.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeUiState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
-  TaskModel? selectedTask; // For tablet view
+class _HomeUiState extends ConsumerState<HomeScreen> {
+  bool isTablet = false;
   bool isDarkMode = false;
+  TaskModel? selectedTask; // For tablet view
+  FocusNode searchFocusNode = FocusNode();
+  final TextEditingController searchController = TextEditingController();
+
+  Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    searchController.addListener(() {
+      if (_debounce?.isActive ?? false) _debounce?.cancel();
+      _debounce = Timer(const Duration(milliseconds: 400), () {
+        ref.read(searchQueryProvider.notifier).state = searchController.text;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    _debounce?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final tasks = ref.watch(taskViewModelProvider);
-    final sortBy = ref.watch(sortPrefViewModelProvider);
-    isDarkMode = ref.watch(themeViewModelProvider);
     // Check screen width
-    final isTablet = MediaQuery.of(context).size.width > 600;
+    isTablet = MediaQuery.of(context).size.width > 600;
+    final allTasks = ref.watch(taskViewModelProvider);
+    final sortBy = ref.watch(sortPrefViewModelProvider);
+    final searchQuery = ref.watch(searchQueryProvider).toLowerCase();
+    final filteredTasks = allTasks.where((task) {
+      return task.title.toLowerCase().contains(searchQuery) ||
+          task.description.toLowerCase().contains(searchQuery);
+    }).toList();
 
+    isDarkMode = ref.watch(themeViewModelProvider);
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Tasks"),
-        actions: [
-          // Sorting Popup
-          PopupMenuButton(
-            icon: Icon(Icons.filter_list),
-            initialValue: sortBy,
-            itemBuilder: (context) => [
-              PopupMenuItem(value: "date", child: Text("Date")),
-              PopupMenuItem(value: "priority", child: Text("Priority")),
+      drawer: DrawerWidget(),
+      drawerEnableOpenDragGesture: false,
+      body: NestedScrollView(
+        headerSliverBuilder: (context, innerBoxIsScrolled) => [
+          SliverAppBar(
+            floating: true,
+            pinned: true,
+            snap: true,
+            centerTitle: true,
+            leading: IconButton(
+              icon: Icon(Icons.person),
+              onPressed: () {
+                Scaffold.of(context).openDrawer();
+              },
+            ),
+            title: Text("Tasks", style: TextStyle(fontFamily: "Poppins")),
+            actions: [
+              // Sorting Popup
+              PopupMenuButton(
+                icon: Icon(Icons.filter_list),
+                initialValue: sortBy,
+                itemBuilder: (context) => [
+                  PopupMenuItem(value: "date", child: Text("Sort by Date")),
+                  PopupMenuItem(
+                      value: "priority", child: Text("Sort by Priority")),
+                ],
+                onSelected: (value) {
+                  // Save sort preference
+                  ref
+                      .read(sortPrefViewModelProvider.notifier)
+                      .updateSortPreference(value);
+                  // Sort task according to preference
+                  ref.read(taskViewModelProvider.notifier).sortTasks();
+                },
+              ),
             ],
-            onSelected: (value) {
-              // Save sort preference
-              ref
-                  .read(sortPrefViewModelProvider.notifier)
-                  .updateSortPreference(value);
-              // Sort task according to preference
-              ref.read(taskViewModelProvider.notifier).sortTasks();
-            },
-          ),
-          // Settings Button
-          IconButton(
-            icon: Icon(Icons.settings),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => SettingsScreen()),
+            bottom: PreferredSize(
+              preferredSize: Size.fromHeight(66),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                child: SizedBox(
+                  height: 56,
+                  child: SearchBar(
+                    focusNode: searchFocusNode,
+                    controller: searchController,
+                    hintText: "Search task...",
+                    elevation: WidgetStatePropertyAll(0),
+                    leading: Icon(CupertinoIcons.search, color: Colors.grey),
+                    hintStyle:
+                        WidgetStatePropertyAll(TextStyle(color: Colors.grey)),
+                    trailing: [
+                      if (searchController.text.isNotEmpty)
+                        IconButton(
+                          icon: Icon(Icons.clear),
+                          onPressed: () {
+                            searchController.clear();
+                            ref.read(searchQueryProvider.notifier).state = "";
+                          },
+                        ),
+                    ],
+                    onTapOutside: (event) {
+                      searchFocusNode.unfocus();
+                    },
+                    shape: WidgetStatePropertyAll(RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        side: BorderSide(color: Colors.grey))),
+                  ),
+                ),
+              ),
             ),
           ),
         ],
+        body: allTasks.isEmpty
+            ? Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      height: 50,
+                      width: 50,
+                      // color: Colors.red,
+                      margin: EdgeInsets.only(bottom: 10),
+                      child: CircularProgressIndicator(),
+                    ),
+                    Text("Schedule your tasks",
+                        style: TextStyle(
+                            fontFamily: "Poppins",
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold)),
+                    Text("Manage your task schedule easily & efficiently",
+                        style: TextStyle(fontFamily: "Poppins", fontSize: 12)),
+                  ],
+                ),
+              )
+            : isTablet
+                ? buildTabletView(filteredTasks)
+                : buildMobileView(filteredTasks),
       ),
-      body: isTablet ? _buildTabletView(tasks) : _buildMobileView(tasks),
-      // Responsive layout
       floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.add),
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => AddEditTaskScreen()),
           );
         },
-        child: Icon(Icons.add),
       ),
     );
   }
 
-  // Mobile View: Full-screen List
-  Widget _buildMobileView(List<TaskModel> tasks) {
-    return ListView.builder(
-      itemCount: tasks.length,
-      physics: ClampingScrollPhysics(),
-      itemBuilder: (context, index) {
-        final task = tasks[index];
+  Widget buildMobileView(List<TaskModel> tasks) {
+    return tasks.isEmpty
+        ? Center(
+            child: Text("No tasks found of given query."),
+          )
+        : ListView.builder(
+            itemCount: tasks.length,
+            padding: EdgeInsets.only(top: 5),
+            physics: ClampingScrollPhysics(),
+            itemBuilder: (context, index) {
+              final task = tasks[index];
+              return taskCard(taskData: task);
+            },
+          );
+  }
 
-        /*return TaskTile(
-          task: task,
-          onDelete: () {
-            ref.read(taskViewModelProvider.notifier).removeTask(task.id);
+  Widget taskCard({required TaskModel taskData}) {
+    DateTime date = taskData.date;
+    String dueDays = "${date.difference(DateTime.now()).inDays + 1}";
+    String dateDisplayValue =
+        "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
+    return GestureDetector(
+      onTap: () {
+        selectedTask = taskData;
+        // Show details panel :
+        // Mobile => New Screen
+        // Tablet => Side Panel
+        if (!isTablet) {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => TaskDetailsSection(task: selectedTask!),
+              ));
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6),
+        child: Dismissible(
+          key: Key("${taskData.id}"),
+          confirmDismiss: (direction) async {
+            // Edit
+            if (direction == DismissDirection.startToEnd) {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AddEditTaskScreen(task: taskData),
+                  ));
+            }
+            // Delete
+            else if (direction == DismissDirection.endToStart) {
+              _showDeleteDialog(context, ref, taskData);
+            }
+            return null;
           },
-          onToggle: () {
-            ref.read(taskViewModelProvider.notifier).toggleTask(task.id);
-          },
-          onTap: () {
-            selectedTask = task;
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => TaskDetailsSection(task: selectedTask!),
-                ));
-          },
-        );*/
-
-        return GestureDetector(
-          onTap: () {
-            selectedTask = task;
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => TaskDetailsSection(task: selectedTask!),
-                ));
-          },
-          child: Dismissible(
-            key: Key("${index - 1}"),
-            child: Container(
-              height: 74,
-              padding: EdgeInsets.all(10),
-              margin: EdgeInsets.only(bottom: 10, left: 10, right: 10),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                border:
-                    Border.all(color: isDarkMode ? Colors.white : Colors.black),
-              ),
-              child: Row(
+          background: Container(
+            alignment: Alignment.centerLeft,
+            margin: EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.only(left: 16.0),
+            decoration: BoxDecoration(
+              color: Colors.green,
+              borderRadius: BorderRadius.circular(12), // Rounded corners
+            ),
+            child: Text("Edit", style: TextStyle(color: Colors.white)),
+          ),
+          secondaryBackground: Container(
+            alignment: Alignment.centerRight,
+            margin: EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.only(right: 16.0),
+            decoration: BoxDecoration(
+              color: Colors.red,
+              borderRadius: BorderRadius.circular(12), // Rounded corners
+            ),
+            child: Text("Delete", style: TextStyle(color: Colors.white)),
+          ),
+          child: Card(
+            // color: Colors.grey.shade50,
+            // margin: EdgeInsets.all(0),
+            child: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                spacing: 6,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Flexible(
-                    child: Center(
-                      child: IconButton(
-                        visualDensity: VisualDensity.compact,
-                        icon: Icon(task.isCompleted
-                            ? Icons.check_box
-                            : Icons.check_box_outline_blank),
-                        onPressed: () {
-                          ref
-                              .read(taskViewModelProvider.notifier)
-                              .toggleTask(task.id);
-                        },
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        taskData.title,
+                        style: TextStyle(
+                            color: isDarkMode ? Colors.white : Colors.black,
+                            overflow: TextOverflow.ellipsis,
+                            fontWeight: FontWeight.w600),
                       ),
-                    ),
-                  ),
-                  Flexible(
-                    flex: 8,
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              task.title,
-                              style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color:
-                                      isDarkMode ? Colors.white : Colors.black,
-                                  decoration: task.isCompleted
-                                      ? TextDecoration.lineThrough
-                                      : null),
-                            ),
-                            Flexible(
-                              child: Container(
-                                padding: EdgeInsets.symmetric(horizontal: 8),
-                                decoration: BoxDecoration(
-                                    border: Border.all(
-                                        color: isDarkMode
-                                            ? Colors.white
-                                            : Colors.black),
-                                    borderRadius: BorderRadius.circular(20)),
-                                child: Text(
-                                  task.priority.name.toUpperCase(),
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: task.priority == TaskPriority.high
-                                        ? Colors.red
-                                        : task.priority == TaskPriority.medium
-                                            ? Colors.orange
-                                            : Colors.green,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                      // options(taskId: taskData.id),
+
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 8),
+                        decoration: BoxDecoration(
+                            color: taskData.priority == TaskPriority.high
+                                ? Colors.red
+                                : taskData.priority == TaskPriority.medium
+                                    ? Colors.orange
+                                    : Colors.green,
+                            borderRadius: BorderRadius.circular(6)),
+                        child: Text(
+                          taskData.priority.name.toUpperCase(),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, color: Colors.white),
                         ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              task.description,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                  color:
-                                      isDarkMode ? Colors.white : Colors.black,
-                                  decoration: task.isCompleted
-                                      ? TextDecoration.lineThrough
-                                      : null),
-                            ),
-                            Text(
-                              "${task.date.day}/${task.date.month}/${task.date.year}",
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: isDarkMode ? Colors.white : Colors.black,
-                              ),
-                            ),
-                          ],
+                      ),
+                    ],
+                  ),
+                  Text(
+                    taskData.description,
+                    style: TextStyle(
+                        /*color: Colors.grey,*/
+                        overflow: TextOverflow.ellipsis),
+                    maxLines: 2,
+                  ),
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: isDarkMode ? Colors.grey : Colors.grey.shade300,
+                      borderRadius: BorderRadiusDirectional.circular(10),
+                    ),
+                    clipBehavior: Clip.antiAliasWithSaveLayer,
+                    // Due Date & Pending Days
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_month,
+                          size: 16,
+                          color: isDarkMode
+                              ? Colors.grey.shade300
+                              : Colors.grey.shade700,
+                        ),
+                        SizedBox(width: 5),
+                        Flexible(
+                          child: Text(
+                            dateDisplayValue,
+                            style: TextStyle(
+                                overflow: TextOverflow.ellipsis,
+                                color: isDarkMode
+                                    ? Colors.grey.shade300
+                                    : Colors.grey.shade700),
+                          ),
                         ),
                       ],
                     ),
@@ -208,65 +324,67 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ],
               ),
             ),
-            confirmDismiss: (direction) async {
-              // Edit
-              if (direction == DismissDirection.startToEnd) {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AddEditTaskScreen(task: task),
-                    ));
-              }
-              // Delete
-              else if (direction == DismissDirection.endToStart) {
-                _showDeleteDialog(context, ref, task);
-              }
-              return null;
-            },
           ),
-        );
+        ),
+      ),
+    );
+  }
+
+  Widget options({required int taskId}) {
+    return PopupMenuButton(
+      iconSize: 20,
+      style: ButtonStyle(visualDensity: VisualDensity.compact),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadiusDirectional.circular(10)),
+      itemBuilder: (context) {
+        return [
+          PopupMenuItem(
+            child: Row(
+              children: [
+                Icon(Icons.edit_calendar, size: 24, color: Colors.black),
+                SizedBox(width: 10),
+                Text("Edit", style: TextStyle(color: Colors.black)),
+              ],
+            ),
+            onTap: () {},
+          ),
+          PopupMenuItem(
+            child: Row(
+              children: [
+                Icon(Icons.delete, size: 24, color: Colors.red),
+                SizedBox(width: 10),
+                Text("Delete", style: TextStyle(color: Colors.red))
+              ],
+            ),
+            onTap: () {},
+          )
+        ];
       },
     );
   }
 
   // Tablet View: Split View with List & Details
-  Widget _buildTabletView(List<TaskModel> tasks) {
+  Widget buildTabletView(List<TaskModel> tasks) {
     return Row(
       children: [
         // Task List (Left Side)
         Expanded(
-          flex: 2,
-          child: ListView.builder(
-            itemCount: tasks.length,
-            itemBuilder: (context, index) {
-              final task = tasks[index];
-
-              return TaskTile(
-                task: task,
-                onTap: () => setState(() => selectedTask = task),
-                // Show in details panel
-                onDelete: () {
-                  ref.read(taskViewModelProvider.notifier).removeTask(task.id);
-                  if (selectedTask?.id == task.id) {
-                    // Clear details if deleted
-                    selectedTask = null;
-                  }
-                },
-                onToggle: () {
-                  ref.read(taskViewModelProvider.notifier).toggleTask(task.id);
-                },
-                isSelected: selectedTask?.id == task.id,
-              );
-            },
-          ),
+          child: buildMobileView(tasks),
         ),
-
+        VerticalDivider(
+          color: Colors.grey.shade300,
+          indent: 24,
+          endIndent: 24,
+        ),
         // Task Details (Right Side)
         Expanded(
-          flex: 3,
           child: selectedTask != null
               ? TaskDetailsSection(task: selectedTask!) // Show Task Details
-              : Center(child: Text("Select a task to view details")),
+              : Center(
+                  child: Text(
+                  "Select a task to view details",
+                  style: TextStyle(color: Colors.grey),
+                )),
         ),
       ],
     );

@@ -28,7 +28,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 Switch.adaptive(
                     value: isDarkMode,
-                    activeColor: Colors.tealAccent,
+                    activeColor: Colors.indigo,
                     onChanged: (value) =>
                         ref.read(themeViewModelProvider.notifier).toggleTheme())
               ],
